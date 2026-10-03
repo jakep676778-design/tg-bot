@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NOVA TECH - Web App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent-color: #38bdf8;
+      --text-color: #f8fafc;
+      --text-muted: #94a3b8;
+      --modal-bg: #1e293b;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding-bottom: 30px;
+    }
+
+    /* Табы */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      background: var(--card-bg);
+      padding: 4px;
+      border-radius: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .tab-btn.active {
+      background: var(--accent-color);
+      color: #000;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Формы */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 6px;
+      color: var(--text-muted);
+    }
+
+    select, input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: var(--card-bg);
+      color: var(--text-color);
+      box-sizing: border-box;
+      font-size: 15px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent-color);
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    /* Фильтры и поиск */
+    .search-box {
+      margin-bottom: 12px;
+    }
+
+    .filter-tags {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-bottom: 16px;
+      padding-bottom: 4px;
+    }
+
+    .tag-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid #334155;
+      background: var(--card-bg);
+      color: var(--text-muted);
+      font-size: 13px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .tag-btn.active {
+      border-color: var(--accent-color);
+      background: #0284c7;
+      color: #fff;
+    }
+
+    /* Сетка товаров */
+    .products-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .product-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid #334155;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .product-card:active {
+      transform: scale(0.97);
+    }
+
+    .product-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 8px 0 4px 0;
+    }
+
+    .product-price {
+      color: var(--accent-color);
+      font-weight: bold;
+      font-size: 15px;
+      margin-top: 6px;
+    }
+
+    .product-badge {
+      font-size: 11px;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      width: fit-content;
+    }
+
+    /* Модальное окно (Popup) */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 100;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: var(--modal-bg);
+      width: 100%;
+      max-height: 85vh;
+      border-radius: 20px 20px 0 0;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .specs-list {
+      margin: 16px 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .specs-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid #334155;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .specs-list li span:first-child {
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Переключатель Вкладок -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('booking', this)">🛠 Запись</button>
+    <button class="tab-btn" onclick="switchTab('catalog', this)">📱 Каталог</button>
+  </div>
+
+  <!-- ВКТЛАДКА 1: ЗАПИСЬ НА РЕМОНТ -->
+  <div id="booking" class="tab-content active">
+    <h3>Запись на ремонт в NOVA TECH</h3>
+    <form id="bookingForm" onsubmit="handleBooking(event)">
+      
+      <div class="form-group">
+        <label>Что требуется починить?</label>
+        <select id="serviceType" required>
+          <option value="">Выберите категорию...</option>
+          <option value="Телефон">📱 Ремонт смартфона (Замена экрана, АКБ и др.)</option>
+          <option value="Ноутбук">💻 Ремонт ноутбука / ПК (Чистка, матрица, пайка)</option>
+          <option value="Мелкая электроника">⚡ Мелкая электроника (Наушники, колонки)</option>
+          <option value="Диагностика">🔍 Бесплатная диагностика</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Опишите поломку (необязательно)</label>
+        <input type="text" id="serviceComment" placeholder="Например: разбился экран на iPhone 11">
+      </div>
+
+      <div class="form-group">
+        <label>Желаемая дата</label>
+        <input type="date" id="bookingDate" required>
+      </div>
+
+      <div class="form-group">
+        <label>Удобное время</label>
+        <select id="bookingTime" required>
+          <option value="">Выберите время...</option>
+          <option value="10:00">10:00</option>
+          <option value="12:00">12:00</option>
+          <option value="14:00">14:00</option>
+          <option value="16:00">16:00</option>
+          <option value="18:00">18:00</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Ваше имя и телефон для связи</label>
+        <input type="text" id="clientContact" placeholder="Имя и +7 (777...)" required>
+      </div>
+
+      <button type="submit" class="submit-btn">Записаться на ремонт</button>
+    </form>
+  </div>
+
+  <!-- ВКЛАДКА 2: КАТАЛОГ ТЕХНИКИ -->
+  <div id="catalog" class="tab-content">
+    
+    <!-- Поиск -->
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="🔍 Поиск техники..." oninput="filterProducts()">
+    </div>
+
+    <!-- Теги-Фильтры -->
+    <div class="filter-tags">
+      <button class="tag-btn active" onclick="filterCategory('all', this)">Все</button>
+      <button class="tag-btn" onclick="filterCategory('phones', this)">Телефоны</button>
+      <button class="tag-btn" onclick="filterCategory('laptops', this)">Ноутбуки</button>
+      <button class="tag-btn" onclick="filterCategory('pc', this)">ПК и Комплектующие</button>
+      <button class="tag-btn" onclick="filterCategory('acc', this)">Аксессуары</button>
+    </div>
+
+    <!-- Сетка Товаров -->
+    <div class="products-grid" id="productsList"></div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО С ХАРАКТЕРИСТИКАМИ -->
+  <div class="modal-overlay" id="productModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="product-badge" id="modalCategory">Категория</span>
+        <button class="close-btn" onclick="closeModal()">✕</button>
+      </div>
+      <h2 id="modalTitle" style="margin: 0 0 8px 0; font-size: 18px;">Название товара</h2>
+      <div class="product-price" id="modalPrice" style="font-size: 20px;">0 ₸</div>
+
+      <ul class="specs-list" id="modalSpecs"></ul>
+
+      <button class="submit-btn" onclick="orderProduct()">🛍 Забронировать / Купить</button>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) tg.expand();
+
+    // БАЗА ДАННЫХ ТОВАРОВ (Легко дополнять)
+    const products = [
+      {
+        id: 1,
+        title: "iPhone 11 64GB (Black)",
+        category: "phones",
+        price: 125000,
+        badge: "Б/У • Отличное",
+        specs: {
+          "Состояние АКБ": "87%",
+          "Экран": "6.1' IPS Liquid Retina",
+          "Процессор": "Apple A13 Bionic",
+          "Комплект": "Коробка, кабель",
+          "Гарантия": "1 месяц от NOVA TECH"
+        }
+      },
+      {
+        id: 2,
+        title: "Samsung Galaxy A54 128GB",
+        category: "phones",
+        price: 145000,
+        badge: "Новый",
+        specs: {
+          "Экран": "6.4' Super AMOLED 120Hz",
+          "Камера": "50 МП с OIS",
+          "Батарея": "5000 мАч",
+          "Память": "8 / 128 ГБ",
+          "Гарантия": "12 месяцев"
+        }
+      },
+      {
+        id: 3,
+        title: "Poco X5 Pro 5G 256GB",
+        category: "phones",
+        price: 110000,
+        badge: "Б/У • Идеал",
+        specs: {
+          "Процессор": "Snapdragon 778G",
+          "Экран": "AMOLED 120Hz",
+          "Зарядка": "Быстрая 67W",
+          "Память": "8 / 256 ГБ",
+          "Гарантия": "1 месяц"
+        }
+      },
+      {
+        id: 4,
+        title: "Lenovo IdeaPad 3 15IAU7",
+        category: "laptops",
+        price: 185000,
+        badge: "Новый",
+        specs: {
+          "Процессор": "Intel Core i3-1215U",
+          "ОЗУ": "8 GB DDR4",
+          "Накопитель": "SSD 256 GB NVMe",
+          "Экран": "15.6' FHD IPS",
+          "Гарантия": "12 месяцев"
+        }
+      },
+      {
+        id: 5,
+        title: "ASUS TUF Gaming F15",
+        category: "laptops",
+        price: 320000,
+        badge: "Б/У • Игровой",
+        specs: {
+          "Процессор": "Intel Core i5-11400H",
+          "Видеокарта": "NVIDIA RTX 3050 4GB",
+          "ОЗУ": "16 GB DDR4",
+          "SSD": "512 GB",
+          "Гарантия": "3 месяца"
+        }
+      },
+      {
+        id: 6,
+        title: "Игровой ПК NOVA Core",
+        category: "pc",
+        price: 240000,
+        badge: "Сборка NOVA TECH",
+        specs: {
+          "Процессор": "Ryzen 5 3600",
+          "Видеокарта": "GTX 1660 Super 6GB",
+          "ОЗУ": "16 GB (2x8GB) 3200MHz",
+          "SSD": "512 GB M.2 NVMe",
+          "Блок питания": "500W 80+"
+        }
+      },
+      {
+        id: 7,
+        title: "Зарядка Apple 20W USB-C",
+        category: "acc",
+        price: 8500,
+        badge: "Оригинал",
+        specs: {
+          "Мощность": "20W",
+          "Разъём": "Type-C",
+          "Совместимость": "iPhone 8 - 15 Pro",
+          "Гарантия": "6 месяцев"
+        }
+      },
+      {
+        id: 8,
+        title: "Беспроводные наушники Haylou GT1",
+        category: "acc",
+        price: 9500,
+        badge: "Новые",
+        specs: {
+          "Тип": "TWS Вкладыши",
+          "Автономность": "До 12 часов с кейсом",
+          "Защита": "IPX5 от брызг",
+          "Гарантия": "3 месяца"
+        }
+      }
+    ];
+
+    let currentSelectedProduct = null;
+
+    // Отрисовка товаров
+    function renderProducts(items) {
+      const container = document.getElementById('productsList');
+      container.innerHTML = '';
+
+      items.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.onclick = () => openModal(product);
+
+        card.innerHTML = `
+          <div>
+            <span class="product-badge">${product.badge}</span>
+            <div class="product-title">${product.title}</div>
+          </div>
+          <div class="product-price">${product.price.toLocaleString()} ₸</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Открытие модального окна
+    function openModal(product) {
+      currentSelectedProduct = product;
+      document.getElementById('modalTitle').innerText = product.title;
+      document.getElementById('modalPrice').innerText = product.price.toLocaleString() + " ₸";
+      document.getElementById('modalCategory').innerText = product.badge;
+
+      const specsContainer = document.getElementById('modalSpecs');
+      specsContainer.innerHTML = '';
+
+      for (const [key, value] of Object.entries(product.specs)) {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${key}</span> <span><b>${value}</b></span>`;
+        specsContainer.appendChild(li);
+      }
+
+      document.getElementById('productModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('productModal').classList.remove('active');
+    }
+
+    // Бронирование товара
+    function orderProduct() {
+      if (!currentSelectedProduct) return;
+
+      const data = {
+        type: 'buy_order',
+        product_id: currentSelectedProduct.id,
+        product_title: currentSelectedProduct.title,
+        price: currentSelectedProduct.price
+      };
+
+      if (tg) {
+        tg.sendData(JSON.stringify(data));
+      } else {
+        alert("Заявка на покупку отправлена: " + currentSelectedProduct.title);
+      }
+      closeModal();
+    }
+
+    // Переключение вкладок
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    // Поиск и Фильтрация
+    function filterProducts() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = products.filter(p => p.title.toLowerCase().includes(query));
+      renderProducts(filtered);
+    }
+
+    function filterCategory(category, btn) {
+      document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      if (category === 'all') {
+        renderProducts(products);
+      } else {
+        const filtered = products.filter(p => p.category === category);
+        renderProducts(filtered);
+      }
+    }
+
+    // Отправка формы записи
+    function handleBooking(e) {
+      e.preventDefault();
+      const data = {
+        type: 'booking',
+        service: document.getElementById('serviceType').value,
+        comment: document.getElementById('serviceComment').value,
+        date: document.getElementById('bookingDate').value,
+        time: document.getElementById('bookingTime').value,
+        contact: document.getElementById('clientContact').value
+      };
+
+      if (tg) {
+        tg.sendData(JSON.stringify(data));
+      } else {
+        alert("Запись на ремонт отправлена: " + JSON.stringify(data));
+      }
+    }
+
+    // Инициализация при старте
+    renderProducts(products);
+  </script>
+</body>
+</html>
